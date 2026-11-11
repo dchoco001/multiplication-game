@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>신나는 구구단 연습 게임 🎒</title>
+  <!-- 눈누 프리텐다드 / 귀여운 폰트 및 canvas-confetti 라이브러리 -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #FFF6E5 0%, #FFE9F3 50%, #E8F4FD 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .game-card {
+      background: #FFFFFF;
+      width: 100%;
+      max-width: 520px;
+      border-radius: 36px;
+      box-shadow: 0 16px 40px rgba(255, 154, 162, 0.2), 0 8px 16px rgba(0, 0, 0, 0.04);
+      padding: 36px 28px;
+      text-align: center;
+      position: relative;
+      border: 4px solid #FFE4E8;
+    }
+
+    /* 칭찬 스티커 / 점수 바 */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 10px 18px;
+      background: #FFF8EB;
+      border-radius: 20px;
+      border: 2px dashed #FFD699;
+      font-weight: 700;
+      color: #6B4E3D;
+      font-size: 1.05rem;
+    }
+
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge span {
+      color: #FF5E7E;
+      font-size: 1.25rem;
+    }
+
+    /* 타이틀 */
+    h1 {
+      font-size: 1.75rem;
+      color: #FF6584;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .subtitle {
+      font-size: 1.05rem;
+      color: #7A869A;
+      margin-bottom: 24px;
+      font-weight: 500;
+    }
+
+    /* 문제 카드 */
+    .question-box {
+      background: #F3F8FF;
+      border-radius: 28px;
+      padding: 32px 20px;
+      margin-bottom: 24px;
+      border: 3px solid #D5E6FF;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.02);
+    }
+
+    .question-text {
+      font-size: 3.4rem;
+      font-weight: 900;
+      color: #2F54EB;
+      letter-spacing: 2px;
+      user-select: none;
+    }
+
+    /* 입력 영역 */
+    .input-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+
+    .answer-input {
+      width: 170px;
+      height: 68px;
+      border-radius: 20px;
+      border: 3px solid #FFCCD5;
+      font-size: 2.5rem;
+      font-weight: 800;
+      text-align: center;
+      color: #333333;
+      background: #FFFDF9;
+      outline: none;
+      transition: all 0.2s ease;
+      -moz-appearance: textfield;
+    }
+
+    .answer-input::-webkit-outer-spin-button,
+    .answer-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .answer-input:focus {
+      border-color: #FF6584;
+      background: #FFFFFF;
+      box-shadow: 0 0 0 5px rgba(255, 101, 132, 0.15);
+    }
+
+    .btn-submit {
+      flex: 1;
+      max-width: 130px;
+      height: 68px;
+      border-radius: 20px;
+      border: none;
+      background: linear-gradient(135deg, #FF758C 0%, #FF7EB3 100%);
+      color: #FFFFFF;
+      font-size: 1.5rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(255, 117, 140, 0.35);
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(255, 117, 140, 0.45);
+    }
+
+    .btn-submit:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 10px rgba(255, 117, 140, 0.25);
+    }
+
+    /* 피드백 영역 */
+    .feedback-box {
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .feedback-message {
+      font-size: 1.45rem;
+      font-weight: 800;
+      line-height: 1.4;
+      padding: 12px 20px;
+      border-radius: 18px;
+      display: none;
+      animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* 정답 스타일: 아주 크게 강조 */
+    .feedback-message.correct {
+      display: block;
+      color: #0E7C3A;
+      background: #E8F8EE;
+      border: 2px solid #A2E8B9;
+      font-size: 2.1rem;
+      font-weight: 900;
+    }
+
+    /* 오답 스타일: '아쉬워요! 정답은 ___이에요.' */
+    .feedback-message.wrong {
+      display: block;
+      color: #D9383A;
+      background: #FFF1F0;
+      border: 2px solid #FFA39E;
+      font-size: 1.35rem;
+    }
+
+    .highlight-answer {
+      color: #2F54EB;
+      text-decoration: underline;
+      font-weight: 900;
+    }
+
+    /* 다음 문제 버튼 */
+    .btn-next {
+      margin-top: 14px;
+      background: #36CF94;
+      color: #FFFFFF;
+      font-size: 1.35rem;
+      font-weight: 800;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: none;
+      box-shadow: 0 6px 16px rgba(54, 207, 148, 0.35);
+      animation: popIn 0.3s ease;
+    }
+
+    .btn-next:hover {
+      background: #28B880;
+      transform: translateY(-2px);
+    }
+
+    @keyframes popIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.85);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* 캐릭터 일러스트/아이콘 */
+    .character-deco {
+      font-size: 1.6rem;
+    }
+
+    @media (max-width: 480px) {
+      .question-text {
+        font-size: 2.7rem;
+      }
+      .answer-input {
+        width: 130px;
+        font-size: 2rem;
+      }
+      .btn-submit {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-card">
+    <!-- 상단 점수 바 -->
+    <div class="top-bar">
+      <div class="badge">
+        <span>⭐</span> 푼 문제: <span id="solvedCount">0</span>개
+      </div>
+      <div class="badge">
+        <span>🔥</span> 연속 정답: <span id="streakCount">0</span>번
+      </div>
+    </div>
+
+    <!-- 타이틀 -->
+    <h1><span class="character-deco">🦁</span> 신나는 구구단 게임 <span class="character-deco">🐯</span></h1>
+    <p class="subtitle">2단부터 9단까지 정답을 맞춰보세요!</p>
+
+    <!-- 문제 카드 -->
+    <div class="question-box">
+      <div class="question-text" id="questionText">2 × 2 = ?</div>
+    </div>
+
+    <!-- 입력 폼 -->
+    <div class="input-form">
+      <input 
+        type="number" 
+        id="answerInput" 
+        class="answer-input" 
+        placeholder="답" 
+        inputmode="numeric" 
+        pattern="[0-9]*"
+        autocomplete="off"
+      />
+      <button id="submitBtn" class="btn-submit">확인</button>
+    </div>
+
+    <!-- 피드백 메시지 영역 -->
+    <div class="feedback-box">
+      <div id="feedbackMsg" class="feedback-message"></div>
+      <button id="nextBtn" class="btn-next">다음 문제 풀기 ➡️</button>
+    </div>
+  </div>
+
+  <script>
+    // 상태 변수
+    let numA = 2;
+    let numB = 2;
+    let currentAnswer = 4;
+    let isWaitingNext = false;
+    let solvedCount = 0;
+    let streakCount = 0;
+
+    // DOM 요소
+    const questionText = document.getElementById('questionText');
+    const answerInput = document.getElementById('answerInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const feedbackMsg = document.getElementById('feedbackMsg');
+    const nextBtn = document.getElementById('nextBtn');
+    const solvedCountEl = document.getElementById('solvedCount');
+    const streakCountEl = document.getElementById('streakCount');
+
+    // 2단부터 9단 랜덤 문제 출제
+    function generateQuestion() {
+      // 2~9단 (앞자리)
+      numA = Math.floor(Math.random() * 8) + 2; 
+      // 1~9 (뒷자리)
+      numB = Math.floor(Math.random() * 9) + 1;
+      currentAnswer = numA * numB;
+
+      questionText.textContent = `${numA} × ${numB} = ?`;
+      answerInput.value = '';
+      answerInput.disabled = false;
+      submitBtn.disabled = false;
+      feedbackMsg.className = 'feedback-message';
+      feedbackMsg.style.display = 'none';
+      nextBtn.style.display = 'none';
+      isWaitingNext = false;
+
+      answerInput.focus();
+    }
+
+    // 팡파르 폭죽 효과 (정답 시)
+    function shootConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 70,
+          spread: 60,
+          origin: { y: 0.65 }
+        });
+      }
+    }
+
+    // 답안 확인
+    function checkAnswer() {
+      if (isWaitingNext) {
+        generateQuestion();
+        return;
+      }
+
+      const userVal = answerInput.value.trim();
+      if (userVal === '') {
+        alert('답을 먼저 입력해주세요! 😊');
+        answerInput.focus();
+        return;
+      }
+
+      const userAnswer = parseInt(userVal, 10);
+      solvedCount++;
+      solvedCountEl.textContent = solvedCount;
+
+      if (userAnswer === currentAnswer) {
+        // 정답!
+        streakCount++;
+        streakCountEl.textContent = streakCount;
+
+        feedbackMsg.className = 'feedback-message correct';
+        feedbackMsg.innerHTML = '🎉 정답! 참 잘했어요! 🎉';
+        feedbackMsg.style.display = 'block';
+
+        shootConfetti();
+      } else {
+        // 오답: '아쉬워요! 정답은 ___이에요.'
+        streakCount = 0;
+        streakCountEl.textContent = streakCount;
+
+        feedbackMsg.className = 'feedback-message wrong';
+        feedbackMsg.innerHTML = `아쉬워요! 정답은 <span class="highlight-answer">${currentAnswer}</span>이에요.`;
+        feedbackMsg.style.display = 'block';
+      }
+
+      // 입력 잠금 및 다음 문제 버튼 표시
+      answerInput.disabled = true;
+      submitBtn.disabled = true;
+      nextBtn.style.display = 'inline-block';
+      nextBtn.focus();
+      isWaitingNext = true;
+    }
+
+    // 이벤트 리스너 등록
+    submitBtn.addEventListener('click', checkAnswer);
+
+    // 엔터키 지원
+    answerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        checkAnswer();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      generateQuestion();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (isWaitingNext && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        generateQuestion();
+      }
+    });
+
+    // 게임 시작 시 첫 문제 생성
+    generateQuestion();
+  </script>
+</body>
+</html>
